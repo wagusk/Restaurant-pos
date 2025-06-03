@@ -1,0 +1,40 @@
+# .devcontainer/docker-compose.yml
+version: '3.8' # This tells Docker Compose which version of its language to use. It's like a syntax rule.
+
+services: # This is where we define all the separate programs (services) that will run together.
+  backend: # This is the name of our first service: our Node.js Express API.
+    build: # How to build this service.
+      context: ../backend # Look for the files needed to build in the 'backend' folder, one level up from here.
+      dockerfile: Dockerfile # Use the file named 'Dockerfile' inside the 'backend' folder to build this service.
+    ports: # How to connect to this service from outside the container.
+      - "3001:3001" # Connect port 3001 on your computer (or Codespace) to port 3001 inside the 'backend' service.
+    volumes: # How to link folders from your computer (or Codespace) into the service.
+      - ../backend:/workspaces/restaurant-pos/backend # Keep the 'backend' folder on your computer in sync with '/workspaces/restaurant-pos/backend' inside the service. This means your code changes immediately apply.
+    depends_on: # Make sure this service starts only after another service is ready.
+      - db # The 'backend' service needs the 'db' (database) service to be running first.
+    environment: # Set up special variables that the 'backend' service can use.
+      # These environment variables are picked up by your Node.js app
+      DB_USER: postgres # The username for connecting to the database.
+      DB_HOST: db # The hostname for the database. Since 'db' is another service in this same file, Docker knows how to find it.
+      DB_DATABASE: restaurant_pos # The name of the database to connect to.
+      DB_PASSWORD: postgres_password # The password for the database user. (Remember, use a stronger password for a real project!)
+      DB_PORT: 5432 # The port the database is listening on.
+      PORT: 3001 # The port our Node.js Express app will run on internally.
+      NODE_ENV: development # Tells Node.js it's running in a development environment.
+    working_dir: /workspaces/restaurant-pos/backend # The main folder inside the service where commands will run.
+
+  db: # This is the name of our second service: our PostgreSQL database.
+    image: postgres:15-alpine # Use a pre-built, lightweight image of PostgreSQL version 15.
+    ports: # How to connect to this database from outside the container.
+      - "5432:5432" # Connect port 5432 on your computer (or Codespace) to port 5432 inside the 'db' service.
+    volumes: # How to link folders from your computer (or Codespace) into the service.
+      - db_data:/var/lib/postgresql/data # This makes sure your database data (like tables and records) is saved even if the 'db' service restarts.
+      - ../backend/init.sql:/docker-entrypoint-initdb.d/init.sql # This is very important! It tells PostgreSQL to run the 'init.sql' file when it first starts up, which will create all our tables.
+    environment: # Set up special variables for the PostgreSQL database.
+      POSTGRES_DB: restaurant_pos # The name of the database that PostgreSQL should create.
+      POSTGRES_USER: postgres # The default username for PostgreSQL.
+      POSTGRES_PASSWORD: postgres_password # The password for the default PostgreSQL user. (Matches the backend's DB_PASSWORD).
+    restart: unless-stopped # If the 'db' service stops, try to restart it unless you manually stopped it.
+
+volumes: # This section defines reusable data storage areas for our services.
+  db_data: # This is the specific name of the volume we're using for PostgreSQL data.
