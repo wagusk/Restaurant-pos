@@ -1,0 +1,17 @@
+Creating an Initial Owner User
+You'll need to run a simple SQL command directly on your PostgreSQL database to insert the first user. This user will have the 'owner' role.
+
+Here's the SQL command:
+INSERT INTO users (username, password_hash, full_name, role)
+VALUES ('owner', '$2a$10$w0a/L.VwK2.tQz7Rz8Pz8uQ.bK7g.Q/J1Xl.Y0bK1', 'Owner Account', 'owner');
+
+
+---------------------------------
+Using psql (command-line client):
+
+If you're inside your backend Docker container (e.g., using docker exec -it <container_name_or_id> bash then psql -U your_user -d your_database), you can just paste the command directly into the psql prompt.
+Alternatively, if you have psql installed locally and connected to your database:
+Bash
+
+psql -U postgres -d restaurant_pos_db -c "INSERT INTO users (username, password_hash, full_name, role) VALUES ('owner', '\$2a\$10\$w0a/L.VwK2.tQz7Rz8Pz8uQ.bK7g.Q/J1Xl.Y0bK1', 'Owner Account', 'owner');"
+Note the backslashes \ before $ in the password_hash when running from the shell, as $ can be interpreted by the shell.
