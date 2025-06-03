@@ -1,0 +1,22 @@
+{
+  "name": "restaurant-pos-backend",                                         # This is the name of your Node.js project.
+  "version": "1.0.0",                                                       # The current version of your project.
+  "description": "Backend API for Restaurant POS System",                   # A short explanation of what this project does.
+  "main": "index.js",                                                       # This tells Node.js which file to run when you start your application.
+  "scripts": {                                                              # These are shortcuts for running common commands.
+    "start": "node index.js",                                               # When you type `npm start`, it will run `node index.js`.
+    "dev": "nodemon index.js"                                               # When you type `npm run dev`, it will run `nodemon index.js`. Nodemon automatically restarts your server when you make changes.
+  },
+  "keywords": [],                                                           # Words that describe your project, useful for searching.
+  "author": "",                                                             # Your name or organization.
+  "license": "ISC",                                                         # The license under which your code is distributed.
+  "dependencies": {                                                         # These are the external libraries your project needs to run.
+    "cors": "^2.8.5",                                                       # Helps your frontend (React) communicate with your backend even if they are on different addresses.
+    "dotenv": "^16.4.5",                                                    # Loads environment variables from a .env file into your application.
+    "express": "^4.19.2",                                                   # The web framework we're using to build the API.
+    "pg": "^8.11.5"                                                         # The official PostgreSQL client for Node.js, allowing your backend to talk to the database.
+  },
+  "devDependencies": {                                                      # Libraries needed only for development, not for the final running application.
+    "nodemon": "^3.1.0"                                                     # A tool that automatically restarts your Node.js server when you make changes to your code.
+  }
+}
