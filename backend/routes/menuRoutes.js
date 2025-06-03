@@ -1,67 +1,63 @@
 // backend/routes/menuRoutes.js
 // This file handles all API requests related to menu items and categories.
 
-const express = require('express'); // Import Express.js to create a router.
-const router = express.Router();    // Create a new router object, which acts like a mini-application to handle routes.
-const pool = require('../db');      // Import our database connection pool, allowing us to interact with PostgreSQL.
+const express = require('express');
+const router = express.Router();
+const pool = require('../db');
+const { auth, authorize } = require('../middleware/auth'); // <-- ADD THIS LINE: Import auth and authorize middleware
 
 // --- Menu Item Routes ---
 
-// GET all menu items
-// URL: /api/menu (when combined with app.use('/api/menu', menuRoutes) in index.js)
-router.get('/', async (req, res) => { // Handles GET requests to the base path of this router.
+// GET all menu items (requires authentication, but any logged-in user can view)
+// URL: /api/menu
+router.get('/', auth, async (req, res) => { // <-- ADD 'auth' middleware here
     try {
-        // Selects all menu items and joins with categories to get the category name.
         const result = await pool.query('SELECT mi.*, c.category_name FROM menu_items mi JOIN categories c ON mi.category_id = c.category_id ORDER BY c.category_name, mi.item_name');
-        res.json(result.rows); // Sends the retrieved menu items as a JSON response.
+        res.json(result.rows);
     } catch (err) {
-        console.error('Error fetching menu items:', err.message); // Log any database errors.
-        res.status(500).send('Server Error'); // Send a generic server error message.
+        console.error('Error fetching menu items:', err.message);
+        res.status(500).send('Server Error');
     }
 });
 
-// GET a single menu item by ID
+// GET a single menu item by ID (requires authentication)
 // URL: /api/menu/:id
-router.get('/:id', async (req, res) => { // Handles GET requests for a specific menu item using its ID.
+router.get('/:id', auth, async (req, res) => { // <-- ADD 'auth' middleware here
     try {
-        const { id } = req.params; // Get the item ID from the URL (e.g., '/api/menu/5' means id = 5).
-        const result = await pool.query('SELECT * FROM menu_items WHERE item_id = $1', [id]); // Query for the item with the matching ID.
-        if (result.rows.length === 0) { // If no item is found...
-            return res.status(404).json({ msg: 'Menu item not found' }); // Send a 404 Not Found response.
+        const { id } = req.params;
+        const result = await pool.query('SELECT * FROM menu_items WHERE item_id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ msg: 'Menu item not found' });
         }
-        res.json(result.rows[0]); // Send the found menu item as a JSON response.
+        res.json(result.rows[0]);
     } catch (err) {
         console.error('Error fetching menu item by ID:', err.message);
         res.status(500).send('Server Error');
     }
 });
 
-// POST a new menu item
+// POST a new menu item (requires owner or supervisor role)
 // URL: /api/menu
-router.post('/', async (req, res) => { // Handles POST requests to add a new menu item.
-    // Get the data for the new menu item from the request body (sent by the frontend).
+router.post('/', auth, authorize('owner', 'supervisor'), async (req, res) => { // <-- ADD 'auth' and 'authorize' middleware here
     const { category_id, item_name, description, price, is_available, image_url } = req.body;
     try {
-        // Insert the new menu item into the database and return the newly created row.
         const result = await pool.query(
             'INSERT INTO menu_items (category_id, item_name, description, price, is_available, image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [category_id, item_name, description, price, is_available, image_url] // The $1, $2... are placeholders to prevent SQL injection.
+            [category_id, item_name, description, price, is_available, image_url]
         );
-        res.status(201).json(result.rows[0]); // Send a 201 Created status and the new item's data.
+        res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error('Error adding menu item:', err.message);
         res.status(500).send('Server Error');
     }
 });
 
-// PUT (Update) an existing menu item
+// PUT (Update) an existing menu item (requires owner or supervisor role)
 // URL: /api/menu/:id
-router.put('/:id', async (req, res) => { // Handles PUT requests to update an existing menu item.
-    const { id } = req.params; // Get the item ID from the URL.
-    // Get the updated data from the request body.
+router.put('/:id', auth, authorize('owner', 'supervisor'), async (req, res) => { // <-- ADD 'auth' and 'authorize' middleware here
+    const { id } = req.params;
     const { category_id, item_name, description, price, is_available, image_url } = req.body;
     try {
-        // Update the menu item in the database with the new values.
         const result = await pool.query(
             'UPDATE menu_items SET category_id = $1, item_name = $2, description = $3, price = $4, is_available = $5, image_url = $6, updated_at = CURRENT_TIMESTAMP WHERE item_id = $7 RETURNING *',
             [category_id, item_name, description, price, is_available, image_url, id]
@@ -69,24 +65,23 @@ router.put('/:id', async (req, res) => { // Handles PUT requests to update an ex
         if (result.rows.length === 0) {
             return res.status(404).json({ msg: 'Menu item not found' });
         }
-        res.json(result.rows[0]); // Send back the updated item's data.
+        res.json(result.rows[0]);
     } catch (err) {
         console.error('Error updating menu item:', err.message);
         res.status(500).send('Server Error');
     }
 });
 
-// DELETE a menu item
+// DELETE a menu item (requires owner or supervisor role)
 // URL: /api/menu/:id
-router.delete('/:id', async (req, res) => { // Handles DELETE requests to remove a menu item.
+router.delete('/:id', auth, authorize('owner', 'supervisor'), async (req, res) => { // <-- ADD 'auth' and 'authorize' middleware here
     try {
-        const { id } = req.params; // Get the item ID from the URL.
-        // Delete the item from the database.
+        const { id } = req.params;
         const result = await pool.query('DELETE FROM menu_items WHERE item_id = $1 RETURNING *', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ msg: 'Menu item not found' });
         }
-        res.json({ msg: 'Menu item deleted successfully' }); // Confirm deletion.
+        res.json({ msg: 'Menu item deleted successfully' });
     } catch (err) {
         console.error('Error deleting menu item:', err.message);
         res.status(500).send('Server Error');
@@ -95,33 +90,32 @@ router.delete('/:id', async (req, res) => { // Handles DELETE requests to remove
 
 // --- Category Routes (related to menu management) ---
 
-// GET all categories
+// GET all categories (requires authentication)
 // URL: /api/menu/categories
-router.get('/categories', async (req, res) => { // Handles GET requests to get all menu categories.
+router.get('/categories', auth, async (req, res) => { // <-- ADD 'auth' middleware here
     try {
         const result = await pool.query('SELECT * FROM categories ORDER BY category_name');
-        res.json(result.rows); // Sends the categories as a JSON response.
+        res.json(result.rows);
     } catch (err) {
         console.error('Error fetching categories:', err.message);
         res.status(500).send('Server Error');
     }
 });
 
-// POST a new category
+// POST a new category (requires owner or supervisor role)
 // URL: /api/menu/categories
-router.post('/categories', async (req, res) => { // Handles POST requests to add a new category.
-    const { category_name, description } = req.body; // Get category data from the request body.
+router.post('/categories', auth, authorize('owner', 'supervisor'), async (req, res) => { // <-- ADD 'auth' and 'authorize' middleware here
+    const { category_name, description } = req.body;
     try {
-        // Insert the new category into the database.
         const result = await pool.query(
             'INSERT INTO categories (category_name, description) VALUES ($1, $2) RETURNING *',
             [category_name, description]
         );
-        res.status(201).json(result.rows[0]); // Send 201 Created status and the new category data.
+        res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error('Error adding category:', err.message);
         res.status(500).send('Server Error');
     }
 });
 
-module.exports = router; // Export this router so index.js can use it.
+module.exports = router;
