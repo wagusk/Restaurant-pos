@@ -14,6 +14,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const discountRoutes = require('./routes/discountRoutes');
 const shiftRoutes = require('./routes/shiftRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express(); // Creates a new Express application.
 const PORT = process.env.PORT || 3001; // Sets the port for the server. It will try to use the PORT from your .env file, or default to 3001.
@@ -25,6 +26,7 @@ app.use(express.json()); // Tells Express to understand and parse incoming reque
 // --- Register API Routes ---
 // These lines connect specific URL paths to their corresponding route files.
 // For example, any request to '/api/menu' or '/api/menu/:id' will be handled by menuRoutes.js.
+app.use('/api/auth', authRoutes); // Register authentication routes
 app.use('/api/menu', menuRoutes); // Routes for managing menu items and categories.
 app.use('/api/orders', orderRoutes); // Routes for creating, fetching, and updating orders.
 app.use('/api/payments', paymentRoutes); // Routes for processing payments.
