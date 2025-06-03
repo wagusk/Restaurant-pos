@@ -1,0 +1,21 @@
+// .devcontainer/devcontainer.json
+{
+    "name": "Restaurant POS Dev",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "backend", // This tells Codespaces which service in docker-compose.yml to attach to for terminal
+    "workspaceFolder": "/workspaces/restaurant-pos/backend", // Set workspace to backend folder
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode",
+                "ms-azuretools.vscode-docker",
+                "ms-vscode.vscode-typescript-next",
+                "humao.rest-client" // Good for testing API routes directly in VS Code
+            ]
+        }
+    },
+    "forwardPorts": [3001, 5432], // Forward backend API and PostgreSQL ports
+    "postCreateCommand": "cd backend && npm install", // Install backend dependencies after container creation
+    "remoteUser": "node"
+}
